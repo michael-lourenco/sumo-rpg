@@ -13,7 +13,7 @@ interface TurnBasedCombatProps {
   player: CombatCharacter
   opponent: CombatCharacter
   arena: string
-  onCombatEnd: (result: "win" | "lose") => void
+  onCombatEnd: (result: "win" | "lose", turns: number) => void
 }
 
 export function TurnBasedCombat({ player, opponent, arena, onCombatEnd }: TurnBasedCombatProps) {
@@ -28,7 +28,7 @@ export function TurnBasedCombat({ player, opponent, arena, onCombatEnd }: TurnBa
 
   useEffect(() => {
     if (combatState?.gameOver) {
-      onCombatEnd(combatState.winner === "player" ? "win" : "lose")
+      onCombatEnd(combatState.winner === "player" ? "win" : "lose", combatState.turn)
       return
     }
 

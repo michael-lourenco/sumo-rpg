@@ -124,4 +124,100 @@ export interface CharacterType {
     unlocked: boolean
   }
   
+  export interface StorageKey {
+    CHARACTER: string
+    GAME_SETTINGS: string
+    COMBAT_HISTORY: string
+    ACHIEVEMENTS: string
+    SAVE_MANAGER: string
+    SAVE_SLOT_PREFIX: string
+  }
+  
+  export interface StorageData {
+    character?: CharacterType
+    gameSettings?: GameSettings
+    combatHistory?: CombatHistoryEntry[]
+    achievements?: Achievement[]
+  }
+  
+  export interface GameSettings {
+    soundEnabled: boolean
+    musicEnabled: boolean
+    difficulty: "easy" | "normal" | "hard"
+    language: string
+    lastSaveDate: string
+  }
+  
+  export interface CombatHistoryEntry {
+    id: string
+    date: string
+    playerName: string
+    opponentName: string
+    result: "win" | "lose"
+    arena: string
+    turns: number
+    playerLevel: number
+    opponentLevel: number
+  }
+  
+  export interface Achievement {
+    id: string
+    name: string
+    description: string
+    unlocked: boolean
+    unlockedDate?: string
+    progress?: number
+    maxProgress?: number
+  }
+  
+  export interface StorageProvider {
+    get<T>(key: string): T | null
+    set<T>(key: string, value: T): void
+    remove(key: string): void
+    clear(): void
+    has(key: string): boolean
+  }
+  
+  export interface AsyncStorageProvider {
+    get<T>(key: string): Promise<T | null>
+    set<T>(key: string, value: T): Promise<void>
+    remove(key: string): Promise<void>
+    clear(): Promise<void>
+    has(key: string): Promise<boolean>
+  }
+  
+  export interface PersistenceConfig {
+    provider: StorageProvider
+    keys: StorageKey
+    enableLogging?: boolean
+    enableCaching?: boolean
+    cacheExpiration?: number
+  }
+  
+  // Tipos para o sistema de múltiplos saves
+  export interface SaveSlot {
+    id: string
+    character: CharacterType
+    lastPlayed: string
+    totalPlayTime: number // em minutos
+    isActive: boolean
+  }
+  
+  export interface SaveManager {
+    activeSaveId: string | null
+    saveSlots: SaveSlot[]
+    maxSlots: number
+    lastBackup: string
+  }
+  
+  export interface SaveMetadata {
+    id: string
+    characterName: string
+    characterLevel: number
+    characterRank: string
+    lastPlayed: string
+    totalPlayTime: number
+    isActive: boolean
+  }
+  
   

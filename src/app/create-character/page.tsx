@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { createCharacter } from "@/lib/game-state"
+import { createSave, activateSave, getActiveSave } from "@/lib/storage"
+import type { CharacterType } from "@/lib/types"
 
 export default function CreateCharacter() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function CreateCharacter() {
     defense: 5,
   })
   const [remainingPoints, setRemainingPoints] = useState(5)
+  const [isCreating, setIsCreating] = useState(false)
 
   const handleAttributeChange = (attribute: string, value: number[]) => {
     const newValue = value[0]
@@ -37,24 +39,60 @@ export default function CreateCharacter() {
     setRemainingPoints(remainingPoints - pointDifference)
   }
 
-  const handleSubmit = () => {
-    if (!name) return
+  const handleCreateCharacter = async () => {
+    console.log("handleCreateCharacter - Iniciando criação de personagem")
+    console.log("handleCreateCharacter - Dados do personagem:", { name, attributes })
+    
+    if (!name.trim()) {
+      alert("Por favor, insira um nome para seu personagem!")
+      return
+    }
 
-    createCharacter({
-      name,
-      country,
-      attributes,
-      level: 1,
-      experience: 0,
-      money: 1000,
-      skills: [],
-      passives: [],
-      wins: 0,
-      losses: 0,
-      rank: "Iniciante",
-    })
+    try {
+      console.log("handleCreateCharacter - Criando save...")
+      const character: CharacterType = {
+        name,
+        country,
+        attributes,
+        level: 1,
+        experience: 0,
+        money: 1000,
+        skills: [],
+        passives: [],
+        wins: 0,
+        losses: 0,
+        rank: "Iniciante",
+        skillPoints: 3,
+        learnedSkills: []
+      }
 
-    router.push("/game")
+      const saveId = await createSave(character)
+      
+      console.log("handleCreateCharacter - Save criado com ID:", saveId)
+      
+      // Aguarda um pouco para garantir que o save foi salvo
+      await new Promise(resolve => setTimeout(resolve, 150))
+      
+      console.log("handleCreateCharacter - Ativando save...")
+      await activateSave(saveId)
+      console.log("handleCreateCharacter - Save ativado")
+      
+      // Aguarda mais um pouco para garantir que a ativação foi processada
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      console.log("handleCreateCharacter - Verificando save ativo...")
+      const activeSave = getActiveSave()
+      console.log("handleCreateCharacter - Save ativo após criação:", activeSave)
+      
+      // Aguarda um pouco antes do redirecionamento
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      console.log("handleCreateCharacter - Redirecionando para /game")
+      router.push("/game")
+    } catch (error) {
+      console.error("handleCreateCharacter - Erro:", error)
+      alert("Erro ao criar personagem: " + error)
+    }
   }
 
   return (
@@ -175,8 +213,12 @@ export default function CreateCharacter() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={handleSubmit} disabled={!name} className="w-full bg-amber-800 hover:bg-amber-900">
-            Começar Jornada
+          <Button 
+            onClick={handleCreateCharacter} 
+            disabled={!name || isCreating} 
+            className="w-full bg-amber-800 hover:bg-amber-900"
+          >
+            {isCreating ? "Criando Personagem..." : "Começar Jornada"}
           </Button>
         </CardFooter>
       </Card>

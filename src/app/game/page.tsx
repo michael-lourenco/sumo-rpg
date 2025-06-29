@@ -4,15 +4,18 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
-import { getCharacter, updateCharacter, addSkillPoints } from "@/lib/game-state"
-import type { CharacterType, ActivityType } from "@/lib/types"
+import { getCharacter, updateCharacter, addSkillPoints, levelUp, updateRank } from "@/lib/game-state"
+import { addCombatHistory } from "@/lib/storage"
+import type { CharacterType, ActivityType, CombatHistoryEntry } from "@/lib/types"
 import { DailyActivities } from "@/components/daily-activities"
 import { CharacterStats } from "@/components/character-stats"
 import { ArenaSelection } from "@/components/arena-selection"
 import { TurnBasedCombat } from "@/components/turn-based-combat"
 import { SkillTree } from "@/components/skill-tree"
+import { ActiveSaveInfo } from "@/components/active-save-info"
 import { CombatManager } from "@/lib/combat"
 import { SkillManager } from "@/lib/skills"
+import { Button } from "@/components/ui/button"
 
 export default function Game() {
   const router = useRouter()
@@ -22,12 +25,18 @@ export default function Game() {
   const [opponent, setOpponent] = useState<any | null>(null)
 
   useEffect(() => {
+    console.log("Game page - Carregando personagem...")
+    
     const savedCharacter = getCharacter()
+    console.log("Personagem obtido:", savedCharacter)
+    
     if (!savedCharacter) {
+      console.log("Nenhum personagem encontrado, redirecionando para create-character")
       router.push("/create-character")
       return
     }
 
+    console.log("Personagem carregado com sucesso:", savedCharacter.name)
     setCharacter(savedCharacter)
   }, [router])
 
@@ -49,10 +58,7 @@ export default function Game() {
 
     // Level up if enough experience
     if (updatedCharacter.experience >= updatedCharacter.level * 100) {
-      updatedCharacter.level += 1
-      updatedCharacter.experience = 0
-      // Adiciona pontos de habilidade ao subir de nível
-      updatedCharacter = addSkillPoints(updatedCharacter, 2)
+      updatedCharacter = levelUp(updatedCharacter)
     }
 
     updateCharacter(updatedCharacter)
@@ -69,8 +75,8 @@ export default function Game() {
     setGameState("combat")
   }
 
-  const handleCombatEnd = (result: "win" | "lose") => {
-    if (!character) return
+  const handleCombatEnd = (result: "win" | "lose", turns: number = 1) => {
+    if (!character || !opponent) return
 
     let updatedCharacter = { ...character }
 
@@ -78,36 +84,40 @@ export default function Game() {
       updatedCharacter.wins += 1
       updatedCharacter.money += 500 * updatedCharacter.level
       updatedCharacter.experience += 50
-
-      // Rank up based on wins
-      if (updatedCharacter.wins === 5 && updatedCharacter.rank === "Iniciante") {
-        updatedCharacter.rank = "Amador Regional"
-      } else if (updatedCharacter.wins === 10 && updatedCharacter.rank === "Amador Regional") {
-        updatedCharacter.rank = "Amador Nacional"
-      } else if (updatedCharacter.wins === 15 && updatedCharacter.rank === "Amador Nacional") {
-        updatedCharacter.rank = "Amador Mundial"
-      } else if (updatedCharacter.wins === 20 && updatedCharacter.rank === "Amador Mundial") {
-        updatedCharacter.rank = "Profissional Japonês"
-      } else if (updatedCharacter.wins === 25 && updatedCharacter.rank === "Profissional Japonês") {
-        // Game completed
-        router.push("/game-completed")
-        return
-      }
     } else {
       updatedCharacter.losses += 1
     }
 
+    // Atualiza ranking baseado nas vitórias
+    updatedCharacter = updateRank(updatedCharacter)
+
     // Level up if enough experience
     if (updatedCharacter.experience >= updatedCharacter.level * 100) {
-      updatedCharacter.level += 1
-      updatedCharacter.experience = 0
-      // Adiciona pontos de habilidade ao subir de nível
-      updatedCharacter = addSkillPoints(updatedCharacter, 2)
+      updatedCharacter = levelUp(updatedCharacter)
     }
+
+    // Salva histórico de combate
+    const combatEntry: CombatHistoryEntry = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      playerName: character.name,
+      opponentName: opponent.name,
+      result,
+      arena: selectedArena || "Arena Desconhecida",
+      turns,
+      playerLevel: character.level,
+      opponentLevel: opponent.level
+    }
+    addCombatHistory(combatEntry)
 
     updateCharacter(updatedCharacter)
     setCharacter(updatedCharacter)
     setGameState("daily")
+
+    // Verifica se o jogo foi completado
+    if (result === "win" && updatedCharacter.wins >= 25) {
+      router.push("/game-completed")
+    }
   }
 
   const generateOpponent = (arena: string, playerLevel: number) => {
@@ -184,6 +194,9 @@ export default function Game() {
   return (
     <main className="min-h-screen p-4 bg-gradient-to-b from-amber-50 to-amber-100">
       <div className="max-w-4xl mx-auto">
+        {/* Informações do save ativo */}
+        <ActiveSaveInfo onBackToMenu={() => router.push("/")} />
+
         <div className="mb-6 bg-white rounded-lg p-4 shadow-md">
           <div className="flex justify-between items-center">
             <div>

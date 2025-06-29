@@ -2,7 +2,7 @@
 
 **Projeto:** RPG baseado em texto com combate por turnos e árvore de habilidades
 **Stack:** Next.js 15 + React 19 + TypeScript + Tailwind CSS
-**Arquitetura:** App Router + Componentes modulares + Clean Code
+**Arquitetura:** App Router + Componentes modulares + Clean Code + **Sistema de Persistência Agnóstico**
 
 ## 📋 Visão Geral do Sistema
 
@@ -12,13 +12,15 @@
 3. **Árvore de Habilidades** → Compra habilidades com pontos ganhos por nível
 4. **Combate por Turnos** → Usa habilidades aprendidas contra oponentes
 5. **Progressão** → Sobe de nível e ranking baseado em vitórias
+6. **Persistência** → Sistema agnóstico salva progresso automaticamente
+7. **Múltiplos Saves** → Até 3 personagens independentes (NOVO)
 
 ### 🏗️ Arquitetura Técnica
 
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── page.tsx                 # Home - Menu principal
+│   ├── page.tsx                 # Home - Menu principal com gerenciador de saves
 │   ├── create-character/        # Criação inicial do personagem
 │   ├── game/                    # Tela principal do jogo
 │   ├── about/                   # Tutorial/Como jogar
@@ -28,14 +30,24 @@ src/
 │   ├── daily-activities.tsx     # Atividades diárias (treino/trabalho)
 │   ├── character-stats.tsx      # Exibição de estatísticas
 │   ├── arena-selection.tsx      # Seleção de arena para combate
-│   ├── skill-tree.tsx           # Árvore de habilidades (NOVO)
-│   └── turn-based-combat.tsx    # Combate por turnos (NOVO)
+│   ├── skill-tree.tsx           # Árvore de habilidades
+│   ├── turn-based-combat.tsx    # Combate por turnos
+│   ├── combat-history.tsx       # Histórico de combates
+│   ├── save-manager.tsx         # Gerenciador de múltiplos saves (NOVO)
+│   └── active-save-info.tsx     # Informações do save ativo (NOVO)
 └── lib/                         # Lógica de negócio
     ├── types.ts                 # Definições TypeScript
-    ├── game-state.ts            # Persistência (localStorage)
-    ├── skills.ts                # Sistema de habilidades (NOVO)
-    ├── combat.ts                # Sistema de combate (NOVO)
-    └── utils.ts                 # Utilitários
+    ├── game-state.ts            # Lógica de jogo (refatorado)
+    ├── skills.ts                # Sistema de habilidades
+    ├── combat.ts                # Sistema de combate
+    ├── utils.ts                 # Utilitários
+    └── storage/                 # Sistema de persistência agnóstica
+        ├── index.ts             # Configuração e instância principal
+        ├── persistence-manager.ts # Gerenciador principal
+        ├── local-storage-provider.ts # Provedor localStorage
+        ├── indexeddb-provider.ts # Provedor IndexedDB (exemplo)
+        ├── README.md            # Documentação do sistema
+        └── MULTIPLE_SAVES.md    # Documentação do sistema de saves (NOVO)
 ```
 
 ## 🎮 Sistemas Principais
@@ -155,38 +167,161 @@ class CombatManager {
 - **Defesas** → Afetam o próprio ator
 - **Utilitárias** → Cura/buffs afetam o ator, debuffs afetam o alvo
 
-### 4. Sistema de Estado (`game-state.ts`)
+### 4. Sistema de Persistência Agnóstica (`storage/`) - **NOVO**
 
-#### Persistência
-- **localStorage** para salvar progresso
-- **Chave:** `"sumo-rpg-character"`
-- **Funções principais:**
-  - `getCharacter()`: Carrega personagem
-  - `updateCharacter()`: Salva personagem
-  - `createCharacter()`: Cria novo personagem
-  - `addSkillPoints()`: Adiciona pontos de habilidade
-  - `learnSkill()`: Aprende nova habilidade
+#### Arquitetura de Provedores
+```typescript
+// Provedor síncrono (localStorage, sessionStorage)
+interface StorageProvider {
+  get<T>(key: string): T | null
+  set<T>(key: string, value: T): void
+  remove(key: string): void
+  clear(): void
+  has(key: string): boolean
+}
+
+// Provedor assíncrono (IndexedDB, APIs REST)
+interface AsyncStorageProvider {
+  get<T>(key: string): Promise<T | null>
+  set<T>(key: string, value: T): Promise<void>
+  remove(key: string): Promise<void>
+  clear(): Promise<void>
+  has(key: string): Promise<boolean>
+}
+```
+
+#### Dados Persistidos
+- **Personagem** → Progresso, atributos, habilidades
+- **Configurações** → Som, música, dificuldade, idioma
+- **Histórico de Combate** → Últimos 100 combates com estatísticas
+- **Conquistas** → Sistema de achievements com progresso
+
+#### Funcionalidades Avançadas
+- **Cache Inteligente** → Reduz chamadas desnecessárias
+- **Backup/Restauração** → Exporta/importa todos os dados
+- **Migração Automática** → Atualiza dados de versões antigas
+- **Logging Detalhado** → Debugging facilitado
+- **Estatísticas** → Monitoramento de uso de armazenamento
+
+#### Trocar Provedor de Armazenamento
+```typescript
+// localStorage (padrão)
+const config = { provider: new LocalStorageProvider() }
+
+// IndexedDB
+const config = { provider: new IndexedDBProvider() }
+
+// SessionStorage
+const config = { provider: new SessionStorageProvider() }
+
+// API REST (exemplo)
+const config = { provider: new APIProvider("https://api.example.com") }
+```
+
+### 5. Sistema de Múltiplos Saves - **NOVO**
+
+#### Estrutura de Saves
+```typescript
+interface SaveManager {
+  activeSaveId: string | null      // ID do save ativo
+  saveSlots: SaveSlot[]           // Lista de slots de save
+  maxSlots: number                // Máximo de saves (3)
+  lastBackup: string              // Data do último backup
+}
+
+interface SaveSlot {
+  id: string                      // ID único do save
+  character: CharacterType        // Dados do personagem
+  lastPlayed: string              // Última vez que jogou
+  totalPlayTime: number           // Tempo total de jogo (minutos)
+  isActive: boolean               // Se é o save ativo
+}
+```
+
+#### Funcionalidades Principais
+- **Até 3 Saves** → Cada save é completamente independente
+- **Migração Automática** → Dados antigos são migrados automaticamente
+- **Gerenciamento Visual** → Interface para gerenciar saves
+- **Tempo de Jogo** → Registra tempo gasto em cada save
+- **Backup/Restauração** → Cada save pode ser exportado/importado
+
+#### Operações de Save
+```typescript
+// Criar novo save
+const saveId = createSave(character)
+
+// Ativar save existente
+activateSave(saveId)
+
+// Atualizar save ativo
+updateActiveSaveCharacter(updatedCharacter)
+
+// Excluir save
+deleteSave(saveId)
+
+// Verificar saves
+const hasExistingSaves = hasSaves()
+const canCreateNew = canCreateSave()
+const saveCount = getSaveCount()
+```
+
+#### Componentes de Interface
+- **SaveManager** → Gerenciamento completo de saves
+- **ActiveSaveInfo** → Informações do save ativo
+- **Migração Automática** → Dados antigos são preservados
+
+### 6. Sistema de Estado (`game-state.ts`)
+
+#### Funções de Compatibilidade
+- **Funções antigas mantidas** para não quebrar código existente
+- **Funções novas** para funcionalidades avançadas
+- **Validação e migração** automática de dados
+
+#### Funções Principais
+```typescript
+// Compatibilidade
+getCharacter(): CharacterType | null
+updateCharacter(character: CharacterType): void
+createCharacter(character: CharacterType): void
+resetGame(): void
+
+// Novas funcionalidades
+levelUp(character: CharacterType): CharacterType
+updateRank(character: CharacterType): CharacterType
+validateCharacter(character: any): character is CharacterType
+migrateCharacter(oldCharacter: any): CharacterType
+```
 
 ## 🔄 Fluxo de Dados
 
-### 1. Criação de Personagem
+### 1. Gerenciamento de Saves (NOVO)
 ```
-create-character/page.tsx → game-state.ts → localStorage
-```
-
-### 2. Atividades Diárias
-```
-daily-activities.tsx → game/page.tsx → game-state.ts → localStorage
+page.tsx → SaveManager → storage/index.ts → localStorage
 ```
 
-### 3. Árvore de Habilidades
+### 2. Criação de Personagem
 ```
-skill-tree.tsx → SkillManager → game-state.ts → localStorage
+create-character/page.tsx → createSave() → storage/index.ts → localStorage
 ```
 
-### 4. Combate
+### 3. Atividades Diárias
 ```
-turn-based-combat.tsx → CombatManager → game/page.tsx → game-state.ts
+daily-activities.tsx → game/page.tsx → updateActiveSaveCharacter() → storage/index.ts → localStorage
+```
+
+### 4. Árvore de Habilidades
+```
+skill-tree.tsx → SkillManager → updateActiveSaveCharacter() → storage/index.ts → localStorage
+```
+
+### 5. Combate
+```
+turn-based-combat.tsx → CombatManager → game/page.tsx → updateActiveSaveCharacter() → storage/index.ts → localStorage
+```
+
+### 6. Histórico de Combate
+```
+combat-history.tsx → storage/index.ts → localStorage
 ```
 
 ## 🎯 Pontos de Modificação Principais
@@ -208,7 +343,18 @@ turn-based-combat.tsx → CombatManager → game/page.tsx → game-state.ts
 
 ### Para Modificar Progressão
 1. **`src/app/game/page.tsx`** - Função `handleCombatEnd()`
-2. **`src/lib/game-state.ts`** - Função `addSkillPoints()`
+2. **`src/lib/game-state.ts`** - Função `levelUp()`
+
+### Para Modificar Persistência (NOVO)
+1. **`src/lib/storage/index.ts`** - Configuração do provedor
+2. **`src/lib/storage/persistence-manager.ts`** - Lógica de gerenciamento
+3. **`src/lib/storage/*-provider.ts`** - Implementação de novos provedores
+
+### Para Modificar Sistema de Saves (NOVO)
+1. **`src/lib/storage/persistence-manager.ts`** - Lógica de gerenciamento de saves
+2. **`src/components/save-manager.tsx`** - Interface de gerenciamento
+3. **`src/components/active-save-info.tsx`** - Informações do save ativo
+4. **`src/lib/types.ts`** - Tipos de SaveManager, SaveSlot, SaveMetadata
 
 ## 🐛 Debugging e Testes
 
@@ -216,12 +362,37 @@ turn-based-combat.tsx → CombatManager → game/page.tsx → game-state.ts
 - **Console do navegador** - Erros de combate e habilidades
 - **localStorage** - Verificar dados do personagem
 - **React DevTools** - Estado dos componentes
+- **Storage logs** - Operações de persistência (se habilitado)
 
 ### Pontos de Verificação
 1. **Habilidades não aparecem** → Verificar `character.learnedSkills`
 2. **Combate não funciona** → Verificar `CombatManager.executeAction()`
-3. **Progresso não salva** → Verificar `game-state.ts`
+3. **Progresso não salva** → Verificar `storage/index.ts`
 4. **IA não joga** → Verificar `CombatManager.getAIAction()`
+5. **Dados não persistem** → Verificar provedor de armazenamento
+6. **Saves não carregam** → Verificar `getActiveSave()` e `activateSave()` (NOVO)
+7. **Migração não funciona** → Verificar `migrateOldSave()` (NOVO)
+
+### Ferramentas de Debug
+```typescript
+// Estatísticas de armazenamento
+import { getStorageStats } from "@/lib/storage"
+console.log(getStorageStats())
+
+// Backup de dados
+import { exportBackup } from "@/lib/storage"
+console.log(exportBackup())
+
+// Limpar cache
+import { clearCache } from "@/lib/storage"
+clearCache()
+
+// Sistema de saves (NOVO)
+import { getSaveMetadata, getActiveSave, getSaveCount } from "@/lib/storage"
+console.log("Saves:", getSaveMetadata())
+console.log("Save ativo:", getActiveSave())
+console.log("Total de saves:", getSaveCount())
+```
 
 ## 🚀 Execução do Projeto
 
@@ -244,20 +415,24 @@ npm run start
 ### Nomenclatura
 - **Interfaces:** PascalCase (`CharacterType`, `CombatState`)
 - **Funções:** camelCase (`getCharacter`, `executeAction`)
-- **Constantes:** UPPER_SNAKE_CASE (`SKILLS`, `CHARACTER_KEY`)
+- **Constantes:** UPPER_SNAKE_CASE (`SKILLS`, `STORAGE_KEYS`)
 - **Componentes:** PascalCase (`SkillTree`, `TurnBasedCombat`)
+- **Provedores:** PascalCase + Provider (`LocalStorageProvider`)
 
 ### Estrutura de Arquivos
 - **Componentes:** Um arquivo por componente
 - **Lógica:** Separada em `lib/` por domínio
 - **Tipos:** Centralizados em `types.ts`
-- **Estado:** Gerenciado via `game-state.ts`
+- **Estado:** Gerenciado via `storage/index.ts`
+- **Persistência:** Organizada em `storage/` com provedores separados
 
 ### Padrões Utilizados
 - **Clean Code:** Funções pequenas e focadas
 - **Single Responsibility:** Cada classe/arquivo tem uma responsabilidade
 - **TypeScript:** Tipagem forte para prevenir erros
 - **React Hooks:** `useState`, `useEffect` para estado local
+- **Repository Pattern:** Abstração de persistência
+- **Strategy Pattern:** Provedores de armazenamento intercambiáveis
 
 ## 🔧 Configurações Importantes
 
@@ -282,7 +457,19 @@ npm run start
 - **Responsive design** habilitado
 - **Custom animations** para transições
 
+### Configurações de Persistência
+```typescript
+// src/lib/storage/index.ts
+const PERSISTENCE_CONFIG: PersistenceConfig = {
+  provider: new LocalStorageProvider("sumo-rpg", false),
+  keys: STORAGE_KEYS,
+  enableLogging: false,
+  enableCaching: true,
+  cacheExpiration: 5 * 60 * 1000 // 5 minutos
+}
+```
+
 ---
 
-**Última atualização:** Sistema de combate por turnos e árvore de habilidades implementado
-**Próximas melhorias:** Sistema de combos, habilidades únicas por arena 
+**Última atualização:** Sistema de múltiplos saves implementado com gerenciamento completo
+**Próximas melhorias:** Sistema de combos, habilidades únicas por arena, sincronização em tempo real, backup em nuvem 
