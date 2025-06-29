@@ -139,7 +139,8 @@ export function CombatHistory() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {history.slice(-10).reverse().map((entry) => (
+            {/* Exibe os combates mais recentes no topo */}
+            {[...history].reverse().map((entry) => (
               <div 
                 key={entry.id} 
                 className={`p-4 rounded-lg border ${getResultColor(entry.result)}`}

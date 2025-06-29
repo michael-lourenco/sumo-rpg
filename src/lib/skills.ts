@@ -1,8 +1,42 @@
 import type { SkillType, SkillTreeNode, CharacterType, CombatCharacter } from "./types"
 
+/*
+SISTEMA DE ENERGIA REBALANCEADO - PROGRESSÃO DE PODER
+
+NÍVEL 1:
+- Energia máxima: 38 (30 + 8 + 0)
+- Recuperação: 7 por turno
+- Habilidades básicas: 5-8 energia
+- Combates: Rápidos, decisivos
+
+NÍVEL 3:
+- Energia máxima: 54 (30 + 24 + 0)
+- Recuperação: 11 por turno
+- Habilidades intermediárias: 10-15 energia
+- Combates: Moderados, estratégicos
+
+NÍVEL 5:
+- Energia máxima: 75 (30 + 40 + 5)
+- Recuperação: 15 por turno
+- Habilidades avançadas: 20-30 energia
+- Combates: Dinâmicos, táticos
+
+NÍVEL 8:
+- Energia máxima: 102 (30 + 64 + 8)
+- Recuperação: 21 por turno
+- Habilidades lendárias: 40-45 energia
+- Combates: Épicos, poderosos
+
+BENEFÍCIOS:
+✅ Combates mais rápidos no início
+✅ Sensação clara de evolução de poder
+✅ Habilidades sempre acessíveis
+✅ Progressão exponencial satisfatória
+*/
+
 // Definição de todas as habilidades disponíveis
 export const SKILLS: SkillType[] = [
-  // Habilidades básicas (nível 1)
+  // Habilidades básicas (nível 1) - Custos baixos para combates rápidos
   {
     id: "basic-push",
     name: "Empurrão Básico",
@@ -18,7 +52,7 @@ export const SKILLS: SkillType[] = [
       damage: 15
     },
     cooldown: 0,
-    energyCost: 10
+    energyCost: 5
   },
   {
     id: "basic-defense",
@@ -35,7 +69,7 @@ export const SKILLS: SkillType[] = [
       buffs: { defense: 5 }
     },
     cooldown: 2,
-    energyCost: 15
+    energyCost: 8
   },
   {
     id: "meditation",
@@ -55,7 +89,7 @@ export const SKILLS: SkillType[] = [
     energyCost: 0
   },
 
-  // Habilidades intermediárias (nível 3)
+  // Habilidades intermediárias (nível 3) - Custos moderados
   {
     id: "powerful-thrust",
     name: "Impulso Poderoso",
@@ -71,7 +105,7 @@ export const SKILLS: SkillType[] = [
       damage: 25
     },
     cooldown: 2,
-    energyCost: 20
+    energyCost: 12
   },
   {
     id: "agile-dodge",
@@ -88,7 +122,7 @@ export const SKILLS: SkillType[] = [
       buffs: { speed: 3 }
     },
     cooldown: 3,
-    energyCost: 15
+    energyCost: 10
   },
   {
     id: "intimidate",
@@ -105,10 +139,10 @@ export const SKILLS: SkillType[] = [
       debuffs: { strength: 2, mentalStrength: 2 }
     },
     cooldown: 4,
-    energyCost: 25
+    energyCost: 15
   },
 
-  // Habilidades avançadas (nível 5)
+  // Habilidades avançadas (nível 5) - Custos mais altos, mas acessíveis
   {
     id: "thunder-clap",
     name: "Palma Trovejante",
@@ -124,7 +158,7 @@ export const SKILLS: SkillType[] = [
       damage: 40
     },
     cooldown: 4,
-    energyCost: 35
+    energyCost: 25
   },
   {
     id: "iron-wall",
@@ -141,7 +175,7 @@ export const SKILLS: SkillType[] = [
       buffs: { defense: 10 }
     },
     cooldown: 5,
-    energyCost: 30
+    energyCost: 20
   },
   {
     id: "battle-focus",
@@ -158,10 +192,10 @@ export const SKILLS: SkillType[] = [
       buffs: { strength: 3, dexterity: 3, mentalStrength: 3, speed: 3, defense: 3 }
     },
     cooldown: 6,
-    energyCost: 40
+    energyCost: 30
   },
 
-  // Habilidades lendárias (nível 8)
+  // Habilidades lendárias (nível 8) - Custos altos, mas personagem tem mais energia
   {
     id: "dragon-rage",
     name: "Fúria do Dragão",
@@ -177,7 +211,7 @@ export const SKILLS: SkillType[] = [
       damage: 60
     },
     cooldown: 6,
-    energyCost: 50
+    energyCost: 45
   },
   {
     id: "immortal-stance",
@@ -195,7 +229,7 @@ export const SKILLS: SkillType[] = [
       healing: 30
     },
     cooldown: 8,
-    energyCost: 45
+    energyCost: 40
   }
 ]
 

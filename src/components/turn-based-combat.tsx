@@ -179,7 +179,7 @@ export function TurnBasedCombat({ player, opponent, arena, onCombatEnd }: TurnBa
         </CardHeader>
         <CardContent>
           <div className="space-y-2 max-h-40 overflow-y-auto">
-            {combatState.log.map((entry, index) => (
+            {[...combatState.log].reverse().map((entry, index) => (
               <div key={index} className="text-sm p-2 bg-gray-50 rounded">
                 <div className="font-medium">Turno {entry.turn}: {entry.actor}</div>
                 <div className="text-gray-600">

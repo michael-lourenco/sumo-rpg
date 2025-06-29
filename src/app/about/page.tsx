@@ -138,6 +138,66 @@ export default function About() {
             </section>
 
             <section className="space-y-2">
+              <h2 className="text-xl font-semibold text-amber-800">⚡ Sistema de Energia Rebalanceado</h2>
+              <p>
+                O sistema de energia foi cuidadosamente balanceado para criar uma sensação clara de evolução de poder:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="bg-green-50 border-green-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg text-green-800">🚀 Progressão de Energia</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="text-sm">
+                      <div className="font-medium">Nível 1:</div>
+                      <div>38 energia • 7 recuperação/turno</div>
+                      <div>Combates rápidos e decisivos</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium">Nível 5:</div>
+                      <div>75 energia • 15 recuperação/turno</div>
+                      <div>Combates dinâmicos e táticos</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium">Nível 8:</div>
+                      <div>102 energia • 21 recuperação/turno</div>
+                      <div>Combates épicos e poderosos</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg text-blue-800">⚔️ Custos de Habilidades</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="text-sm">
+                      <div className="font-medium">Básicas (Nível 1):</div>
+                      <div>5-8 energia • Sempre acessíveis</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium">Intermediárias (Nível 3):</div>
+                      <div>10-15 energia • Estratégicas</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium">Avançadas (Nível 5):</div>
+                      <div>20-30 energia • Poderosas</div>
+                    </div>
+                    <div className="text-sm">
+                      <div className="font-medium">Lendárias (Nível 8):</div>
+                      <div>40-45 energia • Devastadoras</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-800">
+                  <strong>Benefícios:</strong> Combates sempre dinâmicos, sensação clara de evolução, 
+                  habilidades sempre acessíveis conforme você progride, e progressão exponencial satisfatória.
+                </p>
+              </div>
+            </section>
+
+            <section className="space-y-2">
               <h2 className="text-xl font-semibold text-amber-800">📈 Sistema de Progressão</h2>
               <p>Você progride através dos seguintes rankings baseados em vitórias:</p>
               <div className="space-y-2">

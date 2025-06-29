@@ -18,7 +18,8 @@ export class CombatManager {
     skills: string[]
   ): CombatCharacter {
     const maxHealth = 100 + (level * 10)
-    const maxEnergy = 50 + (level * 5)
+    // Energia mais baixa no início, cresce exponencialmente
+    const maxEnergy = 30 + (level * 8) + Math.floor(level * level * 0.5)
 
     return {
       name,
@@ -272,7 +273,8 @@ export class CombatManager {
 
   // Recupera energia no início do turno
   private static recoverEnergy(character: CombatCharacter): CombatCharacter {
-    const energyRecovery = 10 + Math.floor(character.level / 2)
+    // Recuperação mais baixa no início, cresce com o nível
+    const energyRecovery = 5 + (character.level * 2)
     const newEnergy = Math.min(
       character.maxEnergy,
       character.currentEnergy + energyRecovery
